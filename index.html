@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แบบทดสอบ การหายใจระดับเซลล์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1F1A2B;
+    --surface:#2B2438;
+    --surface-2:#352C45;
+    --matrix:#4E86A8;
+    --membrane:#9C5A33;
+    --cristae:#EFDEBB;
+    --atp:#F2B705;
+    --text:#F4EDE2;
+    --muted:#B6A9BE;
+    --right:#6FBF8B;
+    --wrong:#DC7A66;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans Thai",system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.7;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px 16px 56px;
+  }
+  .app{width:100%;max-width:720px;}
+  h1,h2,h3,.display{font-family:"Bai Jamjuree","IBM Plex Sans Thai",sans-serif;font-weight:600;line-height:1.35;margin:0;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- หน้าเริ่มต้น ---------- */
+  .hero{text-align:center;padding:12px 0 4px;}
+  .hero svg{width:min(320px,78%);height:auto;}
+  .atp-spark{animation:pulse 2.6s ease-in-out infinite;transform-origin:center;}
+  @keyframes pulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+  @media (prefers-reduced-motion:reduce){.atp-spark{animation:none;opacity:.9;}}
+  .hero h1{font-size:clamp(28px,7vw,40px);letter-spacing:-.01em;margin-top:10px;}
+  .hero .sub{color:var(--atp);font-family:"Bai Jamjuree",sans-serif;font-weight:500;letter-spacing:.04em;font-size:15px;}
+  .hero p{color:var(--muted);margin:10px auto 0;max-width:44ch;font-size:15px;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid rgba(239,222,187,.13);
+    border-radius:var(--radius);
+    padding:22px;
+    margin-top:22px;
+  }
+  label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px;}
+  input[type=text],input[type=number],select{
+    width:100%;
+    background:var(--surface-2);
+    border:1px solid rgba(239,222,187,.18);
+    border-radius:10px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:17px;
+    padding:11px 13px;
+  }
+  input:focus,select:focus,button:focus-visible,.choice:focus-visible{
+    outline:2px solid var(--atp);outline-offset:2px;
+  }
+  .field{margin-bottom:16px;}
+  .row{display:flex;gap:14px;}
+  .row .field{flex:1;}
+  .err{color:var(--wrong);font-size:14px;min-height:22px;margin:2px 0 8px;}
+
+  button{
+    font-family:"Bai Jamjuree",sans-serif;
+    font-weight:600;
+    font-size:17px;
+    border:none;
+    border-radius:10px;
+    padding:13px 22px;
+    cursor:pointer;
+  }
+  .btn-main{background:var(--atp);color:#2B1F05;width:100%;}
+  .btn-main:hover{background:#FFC81F;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid rgba(239,222,187,.25);}
+  .btn-ghost:hover{color:var(--text);}
+  .btn-ghost:disabled{opacity:.35;cursor:default;}
+
+  /* ---------- หน้าคำถาม ---------- */
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;color:var(--muted);}
+  .bar strong{color:var(--text);font-weight:500;}
+  .track{display:flex;gap:5px;margin:12px 0 20px;}
+  .tick{height:5px;flex:1;border-radius:3px;background:rgba(239,222,187,.15);}
+  .tick.done{background:var(--matrix);}
+  .tick.now{background:var(--atp);}
+  .qnum{font-family:"Bai Jamjuree",sans-serif;color:var(--atp);font-size:14px;font-weight:600;}
+  .qtext{font-size:20px;margin:6px 0 18px;font-weight:500;line-height:1.55;}
+  .choice{
+    display:flex;gap:12px;align-items:flex-start;
+    width:100%;text-align:left;
+    background:var(--surface-2);
+    border:1.5px solid transparent;
+    border-radius:12px;
+    color:var(--text);
+    font-family:inherit;font-size:17px;font-weight:400;line-height:1.55;
+    padding:13px 15px;margin-bottom:10px;
+    cursor:pointer;
+  }
+  .choice:hover{border-color:rgba(242,183,5,.45);}
+  .choice .key{
+    flex:0 0 26px;height:26px;border-radius:50%;
+    background:rgba(239,222,187,.14);
+    font-family:"Bai Jamjuree",sans-serif;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;margin-top:2px;
+  }
+  .choice.picked{border-color:var(--atp);background:#3E3325;}
+  .choice.picked .key{background:var(--atp);color:#2B1F05;}
+  .nav{display:flex;gap:12px;margin-top:18px;}
+  .nav button{flex:1;}
+
+  /* ---------- หน้าสรุปผล ---------- */
+  .score{text-align:center;padding:26px 20px 22px;}
+  .score .num{font-family:"Bai Jamjuree",sans-serif;font-size:66px;font-weight:700;color:var(--atp);line-height:1;}
+  .score .num span{font-size:28px;color:var(--muted);}
+  .score .who{color:var(--muted);font-size:15px;margin-top:10px;}
+  .score .msg{margin-top:6px;font-size:17px;}
+  .review h2{font-size:19px;margin:26px 0 12px;}
+  .item{border-left:3px solid var(--wrong);background:var(--surface);border-radius:0 12px 12px 0;padding:14px 16px;margin-bottom:12px;}
+  .item.ok{border-left-color:var(--right);}
+  .item .head{display:flex;gap:9px;align-items:baseline;font-size:14px;color:var(--muted);}
+  .item .mark{font-family:"Bai Jamjuree",sans-serif;font-weight:700;}
+  .item.ok .mark{color:var(--right);}
+  .item .mark.x{color:var(--wrong);}
+  .item .q{font-size:17px;margin:4px 0 10px;font-weight:500;}
+  .ans{font-size:15px;margin:3px 0;}
+  .ans .tag{color:var(--muted);}
+  .ans.yours{color:var(--wrong);}
+  .ans.key{color:var(--right);}
+  .why{font-size:15px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px dashed rgba(239,222,187,.16);}
+  .end{display:flex;gap:12px;margin-top:22px;}
+  .end button{flex:1;}
+  @media print{
+    body{background:#fff;color:#000;padding:0;}
+    .card,.item{background:#fff;border-color:#bbb;}
+    .end,.btn-main,.btn-ghost{display:none;}
+    .score .num,.qnum{color:#000;}
+    .why,.item .head,.score .who{color:#333;}
+  }
+  @media(max-width:430px){
+    .row{flex-direction:column;gap:0;}
+    body{font-size:16px;}
+    .qtext{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ================= หน้า 1 : ลงชื่อ ================= -->
+<section class="screen active" id="screen-start">
+  <div class="hero">
+    <svg viewBox="0 0 300 170" role="img" aria-label="ภาพไมโทคอนเดรีย">
+      <ellipse cx="150" cy="85" rx="132" ry="68" fill="#9C5A33"/>
+      <ellipse cx="150" cy="85" rx="118" ry="55" fill="#EFDEBB"/>
+      <path d="M45 85c18-30 32 22 50-6s28 26 46 0 30 24 48 0 26 20 44-4v40c-18 24-26 0-44 4s-30-24-48 0-28-26-46 0-32-24-50 6z" fill="#4E86A8"/>
+      <ellipse cx="150" cy="85" rx="118" ry="55" fill="none" stroke="#C79A5E" stroke-width="2"/>
+      <g class="atp-spark" fill="#F2B705">
+        <circle cx="70" cy="42" r="5"/><circle cx="232" cy="122" r="4"/><circle cx="196" cy="36" r="3.5"/>
+      </g>
+    </svg>
+    <div class="sub">Cellular Respiration</div>
+    <h1>การหายใจระดับเซลล์</h1>
+    <p>แบบทดสอบ 10 ข้อ ทำให้ครบทุกข้อแล้วกดส่งคำตอบ ระบบจะเฉลยพร้อมสรุปคะแนนให้ทันที</p>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label for="f-name">ชื่อ - สกุล</label>
+      <input type="text" id="f-name" placeholder="เช่น ณัฐจริญ ใจดี" autocomplete="off">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="f-class">ชั้น</label>
+        <select id="f-class">
+          <option value="">เลือกชั้น</option>
+          <option value="ม.4/1">ม.4/1</option>
+          <option value="ม.4/2">ม.4/2</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-no">เลขที่</label>
+        <input type="number" id="f-no" min="1" max="60" placeholder="เช่น 12">
+      </div>
+    </div>
+    <div class="err" id="start-err"></div>
+    <button class="btn-main" id="btn-start">เริ่มทำแบบทดสอบ</button>
+  </div>
+</section>
+
+<!-- ================= หน้า 2 : คำถาม ================= -->
+<section class="screen" id="screen-quiz">
+  <div class="bar">
+    <span id="who-line"></span>
+    <span>ข้อ <strong id="q-now">1</strong> จาก 10</span>
+  </div>
+  <div class="track" id="track"></div>
+
+  <div class="card">
+    <div class="qnum" id="q-label">ข้อ 1</div>
+    <div class="qtext" id="q-text"></div>
+    <div id="choices"></div>
+  </div>
+
+  <div class="err" id="quiz-err"></div>
+  <div class="nav">
+    <button class="btn-ghost" id="btn-prev">ข้อก่อนหน้า</button>
+    <button class="btn-main" id="btn-next" style="flex:2">ข้อถัดไป</button>
+  </div>
+</section>
+
+<!-- ================= หน้า 3 : เฉลย + คะแนน ================= -->
+<section class="screen" id="screen-result">
+  <div class="card score">
+    <div class="num"><span id="r-score">0</span><span> / 10</span></div>
+    <div class="msg" id="r-msg"></div>
+    <div class="who" id="r-who"></div>
+  </div>
+
+  <div class="review">
+    <h2>เฉลยรายข้อ</h2>
+    <div id="review-list"></div>
+  </div>
+
+  <div class="end">
+    <button class="btn-ghost" onclick="window.print()">บันทึกผล / พิมพ์</button>
+    <button class="btn-main" id="btn-again">ทำใหม่อีกครั้ง</button>
+  </div>
+</section>
+
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    q: "กระบวนการ Glycolysis เกิดขึ้นที่ส่วนใดของเซลล์",
+    c: ["ไซโทซอล (Cytosol)", "เมทริกซ์ (Matrix) ของไมโทคอนเดรีย", "เยื่อหุ้มชั้นในของไมโทคอนเดรีย (Cristae)", "ช่องระหว่างเยื่อหุ้ม (Intermembrane space)"],
+    a: 0,
+    why: "Glycolysis เป็นขั้นเดียวที่เกิดนอกไมโทคอนเดรีย คือเกิดในไซโทซอล ส่วนอีก 2 ขั้นเกิดในไมโทคอนเดรีย"
+  },
+  {
+    q: "Glycolysis เปลี่ยนกลูโคส 1 โมเลกุล ไปเป็นสารใด",
+    c: ["Acetyl coenzyme A 2 โมเลกุล (C₂)", "Pyruvic acid 2 โมเลกุล (C₃)", "Citric acid 1 โมเลกุล (C₆)", "Oxaloacetic acid 2 โมเลกุล (C₄)"],
+    a: 1,
+    why: "กลูโคส (C₆) ถูกสลายเป็น Pyruvic acid 2 โมเลกุล โมเลกุลละ 3 คาร์บอน (C₃)"
+  },
+  {
+    q: "ข้อใดสรุปผลิตภัณฑ์จาก Glycolysis ได้ถูกต้อง",
+    c: ["ได้ 2 ATP, 2 NADH และไม่ได้ CO₂", "ได้ 2 ATP, 2 NADH และได้ 2 CO₂", "ได้ 4 ATP, 6 NADH และได้ 4 CO₂", "ไม่ได้ ATP แต่ได้ 2 NADH และ 2 CO₂"],
+    a: 0,
+    why: "Glycolysis ให้ ATP สุทธิ 2 โมเลกุล และ NADH 2 โมเลกุล ยังไม่มีการปล่อย CO₂ ในขั้นนี้"
+  },
+  {
+    q: "ขั้นตอนใดของการหายใจระดับเซลล์ที่ไม่ได้ ATP เลย",
+    c: ["Glycolysis", "Acetyl coenzyme A Forming", "Krebs cycle", "Electron transport chain"],
+    a: 1,
+    why: "Acetyl coenzyme A Forming ไม่ได้ ATP แต่ได้ 2 NADH และ 2 CO₂ ต่อกลูโคส 1 โมเลกุล"
+  },
+  {
+    q: "Acetyl coenzyme A Forming เกิดที่ใด และเปลี่ยนสารใดเป็นสารใด",
+    c: ["เกิดที่ไซโทซอล เปลี่ยนกลูโคสเป็น Pyruvic acid", "เกิดที่ Cristae เปลี่ยน NADH เป็น ATP", "เกิดที่ Matrix เปลี่ยน 2 Pyruvic acid (C₃) เป็น 2 Acetyl coenzyme A (C₂)", "เกิดที่ Matrix เปลี่ยน Citric acid เป็น Oxaloacetic acid"],
+    a: 2,
+    why: "ขั้นนี้เกิดใน Matrix ซึ่งเป็นของเหลวในไมโทคอนเดรีย คาร์บอนหายไป 1 อะตอมในรูป CO₂ จึงเหลือ C₂"
+  },
+  {
+    q: "เหตุใดวัฏจักรเครบส์จึงเกิดขึ้น 2 รอบ ต่อกลูโคส 1 โมเลกุล",
+    c: ["เพราะมีไมโทคอนเดรีย 2 อัน", "เพราะได้ Acetyl coenzyme A 2 โมเลกุล จากขั้นก่อนหน้า", "เพราะต้องใช้ ATP 2 โมเลกุลในการเริ่มต้น", "เพราะ Oxaloacetic acid มี 2 ชนิด"],
+    a: 1,
+    why: "กลูโคส 1 โมเลกุล ให้ Pyruvic acid 2 โมเลกุล จึงได้ Acetyl-CoA 2 โมเลกุล และแต่ละโมเลกุลเข้าวัฏจักรเครบส์ 1 รอบ"
+  },
+  {
+    q: "วัฏจักรเครบส์ (ครบ 2 รอบ) ให้ผลิตภัณฑ์ตามข้อใด",
+    c: ["2 ATP, 6 NADH, 2 FADH₂, 4 CO₂", "2 ATP, 2 NADH, 2 FADH₂, 2 CO₂", "4 ATP, 10 NADH, 2 FADH₂, 6 CO₂", "ไม่ได้ ATP, 6 NADH, 4 FADH₂, 4 CO₂"],
+    a: 0,
+    why: "เครบส์ 2 รอบ ให้ 2 ATP, 6 NADH, 2 FADH₂ และ 4 CO₂ รวมทั้งกระบวนการจึงได้ NADH 10, FADH₂ 2 และ CO₂ 6 โมเลกุล"
+  },
+  {
+    q: "Electron transport chain เกิดที่ใด และทำหน้าที่อะไร",
+    c: ["ไซโทซอล เปลี่ยนกลูโคสเป็น Pyruvic acid", "Matrix เปลี่ยน Acetyl-CoA เป็น CO₂", "เยื่อหุ้มชั้นใน (Cristae) เปลี่ยน NADH และ FADH₂ ให้เป็น ATP", "เยื่อหุ้มชั้นนอก เปลี่ยน ATP ให้เป็น ADP"],
+    a: 2,
+    why: "ETC อยู่ที่เยื่อหุ้มชั้นในหรือคริสตี ถ่ายทอดอิเล็กตรอนจาก NADH และ FADH₂ เพื่อสร้าง ATP และได้น้ำเป็นผลิตภัณฑ์"
+  },
+  {
+    q: "ตามข้อมูลตำราเล่มใหม่ (NADH = 2.5 ATP, FADH₂ = 1.5 ATP) NADH 10 โมเลกุล และ FADH₂ 2 โมเลกุล จะให้ ATP รวมกี่โมเลกุล",
+    c: ["34 ATP", "32 ATP", "30 ATP", "28 ATP"],
+    a: 3,
+    why: "(10 × 2.5) + (2 × 1.5) = 25 + 3 = 28 ATP เมื่อรวม ATP จาก Glycolysis 2 และ Krebs 2 จะได้ทั้งหมด 32 ATP ในเซลล์ตับ ไต หัวใจ"
+  },
+  {
+    q: "ในสภาวะที่ออกซิเจนไม่เพียงพอ ข้อใดกล่าวถูกต้องเกี่ยวกับกระบวนการหมัก",
+    c: ["Lactic fermentation เปลี่ยน Pyruvic acid เป็น Lactic acid ส่วน Alcohol fermentation เปลี่ยนเป็น Ethanol และได้ CO₂", "ทั้งสองแบบเปลี่ยน Pyruvic acid เป็น Ethanol เหมือนกัน", "การหมักเกิดในไมโทคอนเดรียและได้ ATP มากกว่าแบบใช้ออกซิเจน", "การหมักไม่ต้องผ่าน Glycolysis ก่อน"],
+    a: 0,
+    why: "การหมักเกิดต่อจาก Glycolysis ในไซโทซอล เพื่อเปลี่ยน NADH กลับเป็น NAD⁺ ให้ Glycolysis ทำงานต่อได้ โดยได้ ATP เพียง 2 โมเลกุล"
+  }
+];
+
+const KEYS = ["ก","ข","ค","ง"];
+let student = {};
+let answers = new Array(QUESTIONS.length).fill(null);
+let idx = 0;
+
+const $ = id => document.getElementById(id);
+const show = id => {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $(id).classList.add("active");
+  window.scrollTo(0,0);
+};
+
+/* ---- เริ่มทำแบบทดสอบ ---- */
+$("btn-start").addEventListener("click", () => {
+  const name = $("f-name").value.trim();
+  const cls = $("f-class").value;
+  const no = $("f-no").value.trim();
+  if(!name || !cls || !no){
+    $("start-err").textContent = "กรอกชื่อ-สกุล ชั้น และเลขที่ ให้ครบก่อนเริ่มทำ";
+    return;
+  }
+  $("start-err").textContent = "";
+  student = {name, cls, no};
+  answers = new Array(QUESTIONS.length).fill(null);
+  idx = 0;
+  $("who-line").textContent = `${name} · ${cls} เลขที่ ${no}`;
+  buildTrack();
+  render();
+  show("screen-quiz");
+});
+
+function buildTrack(){
+  $("track").innerHTML = QUESTIONS.map(() => '<div class="tick"></div>').join("");
+}
+
+function render(){
+  const q = QUESTIONS[idx];
+  $("q-now").textContent = idx + 1;
+  $("q-label").textContent = "ข้อ " + (idx + 1);
+  $("q-text").textContent = q.q;
+  $("quiz-err").textContent = "";
+
+  $("choices").innerHTML = q.c.map((text,i) =>
+    `<button class="choice${answers[idx]===i ? " picked" : ""}" data-i="${i}">
+       <span class="key">${KEYS[i]}</span><span>${text}</span>
+     </button>`).join("");
+
+  document.querySelectorAll(".choice").forEach(b => {
+    b.addEventListener("click", () => {
+      answers[idx] = Number(b.dataset.i);
+      render();
+    });
+  });
+
+  document.querySelectorAll(".tick").forEach((t,i) => {
+    t.className = "tick" + (i === idx ? " now" : (answers[i] !== null ? " done" : ""));
+  });
+
+  $("btn-prev").disabled = idx === 0;
+  $("btn-next").textContent = idx === QUESTIONS.length - 1 ? "ส่งคำตอบ" : "ข้อถัดไป";
+}
+
+$("btn-prev").addEventListener("click", () => { if(idx>0){ idx--; render(); } });
+
+$("btn-next").addEventListener("click", () => {
+  if(answers[idx] === null){
+    $("quiz-err").textContent = "เลือกคำตอบก่อนไปข้อถัดไป";
+    return;
+  }
+  if(idx < QUESTIONS.length - 1){ idx++; render(); return; }
+  const missing = answers.findIndex(a => a === null);
+  if(missing !== -1){
+    idx = missing; render();
+    $("quiz-err").textContent = "ยังมีข้อที่ยังไม่ได้ตอบ กลับมาทำข้อนี้ก่อน";
+    return;
+  }
+  finish();
+});
+
+function finish(){
+  const score = answers.reduce((s,a,i) => s + (a === QUESTIONS[i].a ? 1 : 0), 0);
+  $("r-score").textContent = score;
+  $("r-who").textContent = `${student.name} · ${student.cls} เลขที่ ${student.no}`;
+  $("r-msg").textContent =
+    score === 10 ? "เต็ม เข้าใจทุกขั้นตอนแล้ว" :
+    score >= 8  ? "เก่งมาก เหลืออีกนิดเดียว" :
+    score >= 5  ? "ผ่านแล้ว ลองอ่านเฉลยข้อที่พลาดอีกครั้ง" :
+                  "ทบทวนสรุปแต่ละขั้นตอนแล้วลองทำใหม่ได้";
+
+  $("review-list").innerHTML = QUESTIONS.map((q,i) => {
+    const ok = answers[i] === q.a;
+    return `<div class="item${ok ? " ok" : ""}">
+      <div class="head"><span class="mark${ok ? "" : " x"}">${ok ? "✓ ถูก" : "✗ ผิด"}</span><span>ข้อ ${i+1}</span></div>
+      <div class="q">${q.q}</div>
+      ${ok ? "" : `<div class="ans yours"><span class="tag">ตอบไว้:</span> ${KEYS[answers[i]]}. ${q.c[answers[i]]}</div>`}
+      <div class="ans key"><span class="tag">เฉลย:</span> ${KEYS[q.a]}. ${q.c[q.a]}</div>
+      <div class="why">${q.why}</div>
+    </div>`;
+  }).join("");
+
+  show("screen-result");
+}
+
+$("btn-again").addEventListener("click", () => {
+  answers = new Array(QUESTIONS.length).fill(null);
+  idx = 0;
+  render();
+  show("screen-quiz");
+});
+</script>
+</body>
+</html>
